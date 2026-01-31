@@ -163,9 +163,10 @@ npm run client
    VPS_USER="votre_utilisateur_ssh"
    ```
 
-2. **Assurez-vous que les ports sont disponibles** :
-   - Port 3000 (frontend)
-   - Port 5001 (backend)
+2. **Choix des ports** :
+   Le script de déploiement vous demandera quels ports utiliser sur le VPS.
+   - Par défaut : 3011 (frontend) et 5011 (backend)
+   - Vous pouvez les personnaliser pour éviter les conflits avec vos autres applications.
 
 ### 🚀 Lancement du déploiement
 
@@ -180,18 +181,18 @@ chmod +x scripts/test-deployment.sh
 ./scripts/deploy-vps.sh
 ```
 
-**Étape 3: Tester le déploiement**
-```bash
-./scripts/test-deployment.sh
-```
+Suivez les instructions à l'écran pour configurer les ports.
+
+**Étape 3: Configurer Nginx (Reverse Proxy)**
+
+Le script de déploiement copie un fichier `nginx-vps.conf.example` sur votre serveur.
+1. Connectez-vous au VPS : `ssh user@ip`
+2. Allez dans le dossier : `cd /var/www/contest`
+3. Adaptez le fichier exemple à votre configuration Nginx existante.
 
 ### 🌐 Accès à l'application
 
-Une fois le déploiement terminé, l'application sera accessible via :
-
-- **Application principale** : `http://xx.xx.xx.xx/contest`
-- **Administration** : `http://xx.xx.xx.xx/contest/admin`
-- **API** : `http://xx.xx.xx.xx/contest/api`
+Une fois Nginx configuré, l'application sera accessible via l'URL que vous avez définie (ex: `http://votre-domaine.com/contest`).
 
 ### 📊 Gestion des services
 

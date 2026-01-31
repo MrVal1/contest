@@ -1,0 +1,83 @@
+# Exemple de configuration Nginx pour CortiContest sur VPS
+# À copier dans /etc/nginx/sites-available/contest et lier dans /etc/nginx/sites-enabled/
+
+# ----------------------------------------------------------------------
+# OPTION 1 : Sous-répertoire (ex: http://votre-site.com/contest)
+# ----------------------------------------------------------------------
+server {
+    listen 80;
+    server_name votre-domaine.com;
+
+    # Frontend
+    location /contest {
+        # Remplacez 3011 par le port défini dans votre .env (FRONTEND_PORT)
+        proxy_pass http://localhost:3011;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API
+    location /contest/api {
+        # Remplacez 5011 par le port défini dans votre .env (BACKEND_PORT)
+        proxy_pass http://localhost:5011;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Configuration WebSocket pour les mises à jour en temps réel
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # Socket.io (WebSocket)
+    location /socket.io/ {
+        # Remplacez 5011 par le port défini dans votre .env (BACKEND_PORT)
+        proxy_pass http://localhost:5011;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+
+# ----------------------------------------------------------------------
+# OPTION 2 : Sous-domaine (ex: http://contest.votre-site.com)
+# ----------------------------------------------------------------------
+# server {
+#     listen 80;
+#     server_name contest.votre-domaine.com;
+#
+#     location / {
+#         # Remplacez 3011 par le port défini dans votre .env (FRONTEND_PORT)
+#         proxy_pass http://localhost:3011;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#     }
+#
+#     location /api {
+#         # Remplacez 5011 par le port défini dans votre .env (BACKEND_PORT)
+#         proxy_pass http://localhost:5011;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#     }
+#
+#     location /socket.io/ {
+#         # Remplacez 5011 par le port défini dans votre .env (BACKEND_PORT)
+#         proxy_pass http://localhost:5011;
+#         proxy_http_version 1.1;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection "upgrade";
+#         proxy_set_header Host $host;
+#     }
+# }

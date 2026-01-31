@@ -4,15 +4,33 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$SCRIPT_DIR/.." || exit
 
-# Script de déploiement sur VPS
-VPS_IP="51.178.38.40"
-VPS_USER="debian"
+# Load deployment config if exists
+if [ -f .env.deploy ]; then
+    source .env.deploy
+fi
+
+# Configuration par défaut ou demande
+VPS_IP="${VPS_IP:-51.178.38.40}"
+VPS_USER="${VPS_USER:-debian}"
 APP_NAME="corti-contest"
 
+# Demander les ports si non définis
+if [ -z "$VPS_FRONTEND_PORT" ]; then
+    read -p "Port Frontend sur le VPS (défaut: 3011): " VPS_FRONTEND_PORT
+    VPS_FRONTEND_PORT=${VPS_FRONTEND_PORT:-3011}
+fi
+
+if [ -z "$VPS_BACKEND_PORT" ]; then
+    read -p "Port Backend sur le VPS (défaut: 5011): " VPS_BACKEND_PORT
+    VPS_BACKEND_PORT=${VPS_BACKEND_PORT:-5011}
+fi
+
 echo "🚀 Déploiement sur VPS: $VPS_IP"
+echo "🔌 Ports: Frontend=$VPS_FRONTEND_PORT, Backend=$VPS_BACKEND_PORT"
 
 # 1. Créer l'archive du projet
 echo "📦 Création de l'archive..."
+rm -f $APP_NAME.tar.gz
 tar -czf $APP_NAME.tar.gz \
     --exclude=node_modules \
     --exclude=.git \
@@ -20,6 +38,7 @@ tar -czf $APP_NAME.tar.gz \
     --exclude=server/node_modules \
     --exclude=data \
     --exclude=.env \
+    --exclude=*.tar.gz \
     .
 
 # 2. Transférer sur le VPS
@@ -28,7 +47,7 @@ scp $APP_NAME.tar.gz $VPS_USER@$VPS_IP:/tmp/
 
 # 3. Déployer sur le VPS
 echo "🔧 Configuration sur le VPS..."
-ssh $VPS_USER@$VPS_IP << 'REMOTE_SCRIPT'
+ssh $VPS_USER@$VPS_IP "VPS_FRONTEND_PORT=$VPS_FRONTEND_PORT VPS_BACKEND_PORT=$VPS_BACKEND_PORT bash -s" << 'REMOTE_SCRIPT'
 #!/bin/bash
 
 # Variables
@@ -37,74 +56,57 @@ SERVICE_NAME="corti-contest"
 
 # Arrêter les services existants
 echo "⏹️ Arrêt des services existants..."
-sudo docker-compose -f $APP_DIR/docker-compose.prod.yml down 2>/dev/null || true
-sudo docker rm $SERVICE_NAME-backend 2>/dev/null || true
-sudo docker rm $SERVICE_NAME-frontend 2>/dev/null || true
+if [ -d "$APP_DIR" ]; then
+    cd $APP_DIR
+    sudo docker-compose down 2>/dev/null || true
+fi
 
 # Créer le répertoire
 sudo mkdir -p $APP_DIR
+sudo chown $USER:$USER $APP_DIR
 cd $APP_DIR
 
 # Extraire l'archive
 echo "📂 Extraction des fichiers..."
-sudo tar -xzf /tmp/$SERVICE_NAME.tar.gz -C $APP_DIR
-sudo rm /tmp/$SERVICE_NAME.tar.gz
+sudo tar -xzf /tmp/corti-contest.tar.gz -C $APP_DIR
+sudo rm /tmp/corti-contest.tar.gz
 
-# Donner les permissions
-sudo chown -R $USER:$USER $APP_DIR
+# Créer le fichier .env
+echo "📝 Configuration de l'environnement..."
+cat > .env <<EOF
+FRONTEND_PORT=$VPS_FRONTEND_PORT
+BACKEND_PORT=$VPS_BACKEND_PORT
+DB_PATH=/app/data/contest.db
+EOF
 
 # Construire et démarrer
 echo "🏗️ Construction des conteneurs..."
-sudo docker-compose -f docker-compose.prod.yml build
+sudo docker-compose build
 
 echo "🚀 Démarrage des services..."
-sudo docker-compose -f docker-compose.prod.yml up -d
+sudo docker-compose up -d
 
 # Attendre le démarrage
 sleep 10
 
 # Vérifier le statut
 echo "📊 Vérification du statut..."
-sudo docker-compose -f docker-compose.prod.yml ps
+sudo docker-compose ps
 
 REMOTE_SCRIPT
-
-# 4. Configurer Nginx sur le VPS
-echo "🌐 Configuration Nginx..."
-ssh $VPS_USER@$VPS_IP << 'NGINX_SCRIPT'
-#!/bin/bash
-
-# Créer la configuration Nginx
-sudo tee /etc/nginx/sites-available/contest << 'NGINX_CONF'
-location /contest {
-    proxy_pass http://localhost:3000;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-
-location /contest/api {
-    proxy_pass http://localhost:5001;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-NGINX_CONF
-
-# Activer le site
-sudo ln -sf /etc/nginx/sites-available/contest /etc/nginx/sites-enabled/
-
-# Tester et recharger Nginx
-sudo nginx -t && sudo systemctl reload nginx
-
-NGINX_SCRIPT
 
 # Nettoyer l'archive locale
 rm $APP_NAME.tar.gz
 
+echo ""
 echo "✅ Déploiement terminé!"
-echo "🌐 Application disponible sur: http://$VPS_IP/contest"
-echo "🔧 Admin: http://$VPS_IP/contest/admin"
-echo "📊 Logs: ssh $VPS_USER@$VPS_IP 'cd /var/www/contest && sudo docker-compose logs -f'"
+echo "⚠️  NOTE IMPORTANTE POUR NGINX :"
+echo "   Une configuration Nginx exemple a été copiée sur le serveur."
+echo "   Pour l'activer, connectez-vous au VPS et configurez votre reverse proxy :"
+echo ""
+echo "   ssh $VPS_USER@$VPS_IP"
+echo "   cd /var/www/contest"
+echo "   cat nginx-vps.conf.example"
+echo ""
+echo "   Adaptez ce fichier et incluez-le dans votre configuration Nginx principale."
+echo "   (Probablement dans /etc/nginx/sites-available/default ou un nouveau fichier)"
