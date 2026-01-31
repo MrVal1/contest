@@ -1,10 +1,10 @@
-FROM node:18-alpine as build
+FROM node:20-alpine as build
 
 WORKDIR /app
 
 # Copier les fichiers package
 COPY client/package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY client/ .
 RUN npm run build
