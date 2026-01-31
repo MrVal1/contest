@@ -2,8 +2,8 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copier les fichiers backend
-COPY server/package*.json ./
+# Copier les fichiers backend (depuis la racine du projet)
+COPY package*.json ./
 RUN npm ci --only=production
 
 COPY server/ .
@@ -15,4 +15,4 @@ RUN mkdir -p /app/data
 EXPOSE 5001
 
 # Commande de démarrage
-CMD ["node", "index.js"
+CMD ["node", "index.js"]
