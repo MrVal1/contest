@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Ensure we are in project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd "$SCRIPT_DIR/.." || exit
+
 # Script de déploiement sur VPS
 VPS_IP="51.178.38.40"
 VPS_USER="debian"
