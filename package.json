@@ -9,7 +9,7 @@
     "client": "cd client && npm start",
     "build": "cd client && npm run build",
     "start": "node server/index.js",
-    "docker:build": "docker build -t corti-contest .",
+    "docker:build": "docker-compose build",
     "docker:run": "docker-compose up -d",
     "docker:stop": "docker-compose down"
   },

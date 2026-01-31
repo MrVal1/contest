@@ -24,7 +24,9 @@ app.use(cors({
 app.use(express.json());
 
 // Database setup
-const db = new sqlite3.Database('./contest.db');
+const DB_PATH = process.env.DB_PATH || './contest.db';
+console.log(`Using database at: ${DB_PATH}`);
+const db = new sqlite3.Database(DB_PATH);
 
 // Initialize database tables
 db.serialize(() => {

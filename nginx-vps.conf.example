@@ -1,0 +1,49 @@
+# Exemple de configuration Nginx pour CortiContest sur VPS
+# À copier dans /etc/nginx/sites-available/contest et lier dans /etc/nginx/sites-enabled/
+
+# ----------------------------------------------------------------------
+# Configuration pour accès via http://51.178.38.40/contest
+# ----------------------------------------------------------------------
+server {
+    listen 80;
+    # Remplacez par votre IP ou nom de domaine
+    server_name 51.178.38.40;
+
+    # Frontend
+    location /contest {
+        # Port FRONTEND_PORT (3015)
+        proxy_pass http://localhost:3015;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API
+    location /contest/api {
+        # Port BACKEND_PORT (5015)
+        proxy_pass http://localhost:5015;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Configuration WebSocket pour les mises à jour en temps réel
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # Socket.io (WebSocket)
+    location /socket.io/ {
+        # Port BACKEND_PORT (5015)
+        proxy_pass http://localhost:5015;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}

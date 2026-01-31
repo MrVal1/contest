@@ -146,6 +146,129 @@ npm run client
 - `zones` : points de validation intermédiaires
 - `validations` : validations effectuées par les grimpeurs
 
+## 🚀 Déploiement Production (VPS)
+
+### 📋 Prérequis
+
+- Accès SSH à votre VPS
+- Docker et Docker Compose installés sur le VPS
+- Nginx installé sur le VPS
+- Droits sudo sur le VPS
+
+### 🔧 Configuration
+
+1. **Modifiez le fichier `scripts/deploy-vps.sh`** avec vos informations :
+   ```bash
+   VPS_IP="votre_ip_vps"
+   VPS_USER="votre_utilisateur_ssh"
+   ```
+
+2. **Choix des ports** :
+   Le script de déploiement vous demandera quels ports utiliser sur le VPS.
+   - Par défaut : 3011 (frontend) et 5011 (backend)
+   - Vous pouvez les personnaliser pour éviter les conflits avec vos autres applications.
+
+### 🚀 Lancement du déploiement
+
+**Étape 1: Rendre les scripts exécutables**
+```bash
+chmod +x scripts/deploy-vps.sh
+chmod +x scripts/test-deployment.sh
+```
+
+**Étape 2: Lancer le déploiement**
+```bash
+./scripts/deploy-vps.sh
+```
+
+Suivez les instructions à l'écran pour configurer les ports.
+
+**Étape 3: Configurer Nginx (Reverse Proxy)**
+
+Le script de déploiement copie un fichier `nginx-vps.conf.example` sur votre serveur.
+1. Connectez-vous au VPS : `ssh user@ip`
+2. Allez dans le dossier : `cd /var/www/contest`
+3. Adaptez le fichier exemple à votre configuration Nginx existante.
+
+### 🌐 Accès à l'application
+
+Une fois Nginx configuré, l'application sera accessible via l'URL que vous avez définie (ex: `http://votre-domaine.com/contest`).
+
+### 📊 Gestion des services
+
+**Vérifier le statut**
+```bash
+ssh votre_user@votre_ip "cd /var/www/contest && sudo docker-compose ps"
+```
+
+**Voir les logs**
+```bash
+ssh votre_user@votre_ip "cd /var/www/contest && sudo docker-compose logs -f"
+```
+
+**Redémarrer les services**
+```bash
+ssh votre_user@votre_ip "cd /var/www/contest && sudo docker-compose restart"
+```
+
+**Arrêter les services**
+```bash
+ssh votre_user@votre_ip "cd /var/www/contest && sudo docker-compose down"
+```
+
+### 🗂️ Structure des fichiers
+
+- `Dockerfile.backend` : Configuration Docker pour le backend Node.js
+- `Dockerfile.frontend` : Configuration Docker pour le frontend React + Nginx
+- `nginx.conf` : Configuration Nginx interne aux conteneurs
+- `docker-compose.yml` : Configuration Docker Compose pour la production
+- `scripts/deploy-vps.sh` : Script automatisé de déploiement
+- `scripts/test-deployment.sh` : Script de test du déploiement
+
+### 🔍 Dépannage
+
+**Problèmes courants**
+
+1. **Ports déjà utilisés**
+   ```bash
+   # Vérifier les ports sur le VPS
+   ssh votre_user@votre_ip "sudo netstat -tlnp | grep -E ':(3000|5001)'"
+   ```
+
+2. **Permissions Docker**
+   ```bash
+   # Ajouter l'utilisateur au groupe docker
+   ssh votre_user@votre_ip "sudo usermod -aG docker votre_user"
+   ```
+
+3. **Configuration Nginx**
+   ```bash
+   # Tester la configuration Nginx
+   ssh votre_user@votre_ip "sudo nginx -t"
+
+   # Recharger Nginx
+   ssh votre_user@votre_ip "sudo systemctl reload nginx"
+   ```
+
+### 📝 Notes importantes
+
+- La base de données SQLite est persistée dans le volume `./data` sur le VPS
+- Les conteneurs redémarrent automatiquement en cas de crash
+- Nginx sur le VPS route les requêtes vers les conteneurs Docker
+- Les logs sont disponibles via Docker Compose
+
+### 🔄 Mises à jour
+
+Pour mettre à jour l'application :
+
+1. Modifiez votre code localement
+2. Relancez le script de déploiement :
+   ```bash
+   ./scripts/deploy-vps.sh
+   ```
+
+Le script arrêtera les anciens conteneurs, déploiera la nouvelle version et redémarrera les services.
+
 ## 📋 Déroulement d'un Contest
 
 1. **Phase de préparation** (Admin) :
@@ -198,4 +321,3 @@ Ce projet est sous licence MIT.
 ---
 
 **Développé avec ❤️ pour la communauté d'escalade**
-# contest

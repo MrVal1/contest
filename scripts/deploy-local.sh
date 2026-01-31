@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Ensure we are in project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd "$SCRIPT_DIR/.." || exit
+
 # Script de déploiement pour OVH
 echo "🚀 Déploiement de CortiContest sur OVH"
 
