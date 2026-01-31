@@ -36,8 +36,8 @@ L'application utilise des variables d'environnement pour définir les ports et l
    **Exemple de configuration :**
    ```ini
    # Ports pour Docker
-   FRONTEND_PORT=3011
-   BACKEND_PORT=5011
+   FRONTEND_PORT=3015
+   BACKEND_PORT=5015
 
    # Base de données (ne pas toucher)
    DB_PATH=/app/data/contest.db
@@ -67,7 +67,7 @@ Pour rendre l'application accessible via un nom de domaine ou un sous-dossier st
 # Copier la config (adaptez le nom du fichier destination)
 sudo cp nginx-vps.conf.example /etc/nginx/sites-available/contest
 
-# Editer pour mettre vos ports (ex: 3011 et 5011) et votre domaine
+# Editer pour vérifier la config (déjà configuré pour 3015/5015 et /contest)
 sudo nano /etc/nginx/sites-available/contest
 
 # Activer le site

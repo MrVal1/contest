@@ -16,13 +16,13 @@ APP_NAME="corti-contest"
 
 # Demander les ports si non définis
 if [ -z "$VPS_FRONTEND_PORT" ]; then
-    read -p "Port Frontend sur le VPS (défaut: 3011): " VPS_FRONTEND_PORT
-    VPS_FRONTEND_PORT=${VPS_FRONTEND_PORT:-3011}
+    read -p "Port Frontend sur le VPS (défaut: 3015): " VPS_FRONTEND_PORT
+    VPS_FRONTEND_PORT=${VPS_FRONTEND_PORT:-3015}
 fi
 
 if [ -z "$VPS_BACKEND_PORT" ]; then
-    read -p "Port Backend sur le VPS (défaut: 5011): " VPS_BACKEND_PORT
-    VPS_BACKEND_PORT=${VPS_BACKEND_PORT:-5011}
+    read -p "Port Backend sur le VPS (défaut: 5015): " VPS_BACKEND_PORT
+    VPS_BACKEND_PORT=${VPS_BACKEND_PORT:-5015}
 fi
 
 echo "🚀 Déploiement sur VPS: $VPS_IP"
